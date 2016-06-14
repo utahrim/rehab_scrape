@@ -7,8 +7,8 @@ Rails.application.routes.draw do
 
   resources :facilities
 
-  get 'search', :to => 'facilities'
-  get 'data', :to => 'facilities'
+  get 'search', :controller => 'facilities'
+  get 'data', :controller => 'facilities'
   # Example of regular route:
   #   get 'products/:id' => 'catalog#view'
 
