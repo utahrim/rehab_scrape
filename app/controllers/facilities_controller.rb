@@ -16,14 +16,18 @@ class FacilitiesController < ApplicationController
     driver.get ("http://www.drugrehabexchange.com/find/SubstanceAbuseTreatment/?state=Florida")
     page_array = driver.find_elements(:class, "k-link")
     pages = page_array[23].attribute("data-page").to_i
+    page_clicks = 0
+
     (pages - 1).times do
       l = 0
       pf = 1
       tc = 2
-      data_list = driver.find_elements(:xpath, "//td[@role='gridcell']")
-      while data_list[l] != nil do
-        sleep(1)
+      sleep(1)
+      data_list1 = driver.find_elements(:xpath, "//td[@role='gridcell']")
+      while data_list1[l] != nil do
+        sleep(2)
         data_list = driver.find_elements(:xpath, "//td[@role='gridcell']")
+        sleep(1)
         name_loc = data_list[l].text.split("\n") 
         name = name_loc[0]
         loc = name_loc.last
@@ -36,6 +40,7 @@ class FacilitiesController < ApplicationController
         data_list[l].click
         sleep(2)
         det = driver.find_elements(:class, "details")
+        sleep(1)
         details = det[0].text.split("\n")
         address = details[3] + ", " + details[4]
         phone = details[10].match(/.\d+..\d+.\d+/).to_s
@@ -44,11 +49,14 @@ class FacilitiesController < ApplicationController
         pf += 3
         tc += 3
         driver.navigate.back()
-        driver.navigate.forward()
-        page_array = driver.find_elements(:class, "k-link")
+        page_clicks.times do
+          sleep(1.5)
+          page_array = driver.find_elements(:class, "k-link")
+          page_array[22].click
+          sleep(1)
+        end
       end
-      binding.pry
-      page_array[22].click
+      page_clicks += 1
       page_array = driver.find_elements(:class, "k-link")
     end
   end
