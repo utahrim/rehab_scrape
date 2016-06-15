@@ -28,7 +28,7 @@ gem 'selenium-webdriver', '~> 2.53'
 gem 'bootstrap-sass', '~> 3.3', '>= 3.3.6'
 # Use Unicorn as the app server
 # gem 'unicorn'
-
+gem 'chromedriver-helper', '~> 1.0'
 # Use Capistrano for deployment
 # gem 'capistrano-rails', group: :development
 

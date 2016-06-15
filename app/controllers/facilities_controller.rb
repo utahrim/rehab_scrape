@@ -12,12 +12,12 @@ class FacilitiesController < ApplicationController
   end
 
   def search
-    driver = Selenium::WebDriver.for :firefox
+    driver = Selenium::WebDriver.for :chrome
     driver.get ("http://www.drugrehabexchange.com/find/SubstanceAbuseTreatment/?state=Florida")
     page_array = driver.find_elements(:class, "k-link")
     pages = page_array[23].attribute("data-page").to_i
     page_clicks = 0
-    wait = Selenium::WebDriver::Wait.new(:timeout => 10)
+    wait = Selenium::WebDriver::Wait.new(:timeout => 20)
     (pages - 1).times do
       l = 0
       pf = 1
@@ -39,8 +39,7 @@ class FacilitiesController < ApplicationController
         primary_focus = data_list[pf].text
         type_care = data_list[tc].text
         data_list[l].click
-        det = wait.until { driver.find_elements(:class, "details") }
-        sleep(2)
+        # det = wait.until { driver.find_elements(:class, "details") }
         det = driver.find_elements(:class, "details")
         details = det[0].text.split("\n")
         address = details[3] + ", " + details[4]
@@ -49,10 +48,14 @@ class FacilitiesController < ApplicationController
         l += 3
         pf += 3
         tc += 3
-        driver.get ("http://www.drugrehabexchange.com/find/SubstanceAbuseTreatment/?state=Florida")
+        # driver.get ("http://www.drugrehabexchange.com/find/SubstanceAbuseTreatment/?state=Florida")
+        sleep(1)
+        driver.navigate.back()
         page_clicks.times do
           page_array = wait.until { driver.find_elements(:class, "k-link") }
-          sleep(2)
+          sleep(1)
+          page_array = driver.find_elements(:class, "k-link")
+          sleep(1)
           page_array[22].click
         end
       end

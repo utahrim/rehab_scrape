@@ -12,6 +12,7 @@ require "sprockets/railtie"
 require "selenium-webdriver"
 require "csv"
 require "time"
+require "net/http"
 # require "rails/test_unit/railtie"
 
 # Require the gems listed in Gemfile, including any gems
