@@ -13,7 +13,7 @@ class FacilitiesController < ApplicationController
 
   def search
     driver = Selenium::WebDriver.for :chrome
-    driver.get ("http://www.drugrehabexchange.com/find/SubstanceAbuseTreatment/?state=Florida")
+    driver.get ("http://www.drugrehabexchange.com/find/SubstanceAbuseTreatment/?state=Texas")
     page_array = driver.find_elements(:class, "k-link")
     pages = page_array[23].attribute("data-page").to_i
     page_clicks = 0
@@ -43,7 +43,7 @@ class FacilitiesController < ApplicationController
         det = driver.find_elements(:class, "details")
         details = det[0].text.split("\n")
         address = details[3] + ", " + details[4]
-        phone = details[10].match(/.\d+.+\d+.\d+/).to_s
+        phone = details[-1].match(/.\d+.+\d+.\d+/).to_s
         Facility.find_or_create_by(facility_name: name, facility_city: city, facility_county: county, facility_state: state, facility_primary_focus: primary_focus, facility_type_of_care: type_care, facility_address: address, facility_phone_number: phone)
         l += 3
         pf += 3
