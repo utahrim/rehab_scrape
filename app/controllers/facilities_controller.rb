@@ -56,7 +56,7 @@ class FacilitiesController < ApplicationController
           sleep(1)
           page_array = driver.find_elements(:class, "k-link")
           sleep(1)
-          page_array[22].click
+          page_array[-2].click
         end
       end
       page_clicks += 1
