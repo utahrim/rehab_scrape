@@ -14,7 +14,7 @@ class FacilitiesController < ApplicationController
   def search
     driver = Selenium::WebDriver.for :chrome
     states_array = ["District%20of%20Columbia", "Alaska", "Alabama", "Arkansas", "Arizona", "California", "Colorado", "Connecticut", "Delaware", "Florida", "Georgia" , "Hawaii", "Iowa", "Idaho", "Illinois", "Indiana", "Kansas", "Kentucky", "Louisiana", "Massachusetts", "Maryland", "Maine", "Michigan", "Minnesota", "Missouri", "Mississippi", "Montana", "North%20Carolina", "North%20Dakota", "Nebraska", "New%20Hampshire", "New%20Jersey", "New%20Mexico", "Nevada", "New%20York", "Ohio", "Oklahoma", "Oregon", "Pennsylvania" , "Rhode%20Island", "South%20Carolina", "South%20Dakota", "Tennessee", "Texas", "Utah", "Virginia", "Vermont", "Washington", "Wisconsin", "West%20Virginia", "Wyoming"]
-    states_array.each do |state_site|
+    # states_array.each do |state_site|
       driver.get ("http://www.drugrehabexchange.com/find/SubstanceAbuseTreatment/?state=#{state_site}")
       page_array = driver.find_elements(:class, "k-link")
       pages = page_array[-1].attribute("data-page").to_i
@@ -67,6 +67,6 @@ class FacilitiesController < ApplicationController
         @page_clicks += 1
         page_array = wait.until { driver.find_elements(:class, "k-link") }
       end
-    end
+    # end
   end
 end
