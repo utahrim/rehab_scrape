@@ -18,26 +18,26 @@ class FacilitiesController < ApplicationController
   end
 
   def search
-    driver = Selenium::WebDriver.for :chrome
-    states_array = ["Florida", "Georgia", "Hawaii", "Iowa", "Idaho", "Illinois", "Indiana", "Kansas", "Kentucky", "Louisiana", "Massachusetts", "Maryland", "Maine", "Michigan", "Minnesota", "Missouri", "Mississippi", "Montana", "North%20Carolina", "North%20Dakota", "Nebraska", "New%20Hampshire", "New%20Jersey", "New%20Mexico", "Nevada", "New%20York", "Ohio", "Oklahoma", "Oregon", "Pennsylvania" , "Rhode%20Island", "South%20Carolina", "South%20Dakota", "Tennessee", "Texas", "Utah", "Virginia", "Vermont", "Washington", "Wisconsin", "West%20Virginia", "Wyoming", "Alaska", "Alabama", "Arkansas", "Arizona", "California", "Colorado", "Connecticut", "District%20of%20Columbia", "Delaware"]
+    @driver = Selenium::WebDriver.for :chrome
+    states_array = ["Indiana", "Kansas", "Kentucky", "Louisiana", "Massachusetts", "Maryland", "Maine", "Michigan", "Minnesota", "Missouri", "Mississippi", "Montana", "North%20Carolina", "North%20Dakota", "Nebraska", "New%20Hampshire", "New%20Jersey", "New%20Mexico", "Nevada", "New%20York", "Ohio", "Oklahoma", "Oregon", "Pennsylvania" , "Rhode%20Island", "South%20Carolina", "South%20Dakota", "Tennessee", "Texas", "Utah", "Virginia", "Vermont", "Washington", "Wisconsin", "West%20Virginia", "Wyoming", "Alaska", "Alabama", "Arkansas", "Arizona", "California", "Colorado", "Connecticut", "District%20of%20Columbia", "Delaware", "Florida", "Georgia", "Hawaii", "Iowa", "Idaho", "Illinois"]
     states_array.each do |state_site|
-      driver.get ("http://www.drugrehabexchange.com/find/SubstanceAbuseTreatment/?state=#{state_site}")
-      page_array = driver.find_elements(:class, "k-link")
+      @driver.get ("http://www.drugrehabexchange.com/find/SubstanceAbuseTreatment/?state=#{state_site}")
+      page_array = @driver.find_elements(:class, "k-link")
       pages = page_array[-1].attribute("data-page").to_i
-      @page_clicks = 0
-      wait = Selenium::WebDriver::Wait.new(:timeout => 20)
+      @page_clicks = 1
+      @wait = Selenium::WebDriver::Wait.new(:timeout => 20)
       (pages).times do
         l = 0
         pf = 1
         tc = 2
-        data_list1 = driver.find_elements(:xpath, "//td[@role='gridcell']")
+        data_list1 = @driver.find_elements(:xpath, "//td[@role='gridcell']")
 
         while data_list1[l] != nil do
-            data_list = wait.until { driver.find_elements(:xpath, "//td[@role='gridcell']") }
+            data_list = @wait.until { @driver.find_elements(:xpath, "//td[@role='gridcell']") }
             sleep(2)
-            @data_list = driver.find_elements(:xpath, "//td[@role='gridcell']")
+            @data_list = @driver.find_elements(:xpath, "//td[@role='gridcell']")
             sleep(1)
-            if driver.find_elements(:class, "k-link")[-2].attribute("class") == "k-link k-state-disabled"
+            if @driver.find_elements(:class, "k-link")[-2].attribute("class") == "k-link k-state-disabled"
               break
             else
             name_loc = @data_list[l].text.split("\n") 
@@ -50,8 +50,8 @@ class FacilitiesController < ApplicationController
             primary_focus = @data_list[pf].text
             type_care = @data_list[tc].text
             @data_list[l].click
-            det = wait.until { driver.find_elements(:class, "details") }
-            det = driver.find_elements(:class, "details")
+            det = @wait.until { @driver.find_elements(:class, "details") }
+            det = @driver.find_elements(:class, "details")
             details = det[0].text.split("\n")
             address = details[3] + ", " + details[4]
             phone = details[-1].match(/.\d+.+\d+.\d+/).to_s
@@ -60,19 +60,33 @@ class FacilitiesController < ApplicationController
             pf += 3
             tc += 3
             sleep(1)
-            driver.navigate.back()
-            @page_clicks.times do
-              page_array = wait.until { driver.find_elements(:class, "k-link") }
-              sleep(1)
-              page_array = driver.find_elements(:class, "k-link")
-              sleep(1.5)
-              page_array[-2].click
-            end
+            @driver.navigate.back()
+            clicks(@page_clicks)
           end
         end
         @page_clicks += 1
-        page_array = wait.until { driver.find_elements(:class, "k-link") }
+        page_array = @wait.until { @driver.find_elements(:class, "k-link") }
       end
+    end
+  end
+
+  def clicks(n)
+    num = n - 1
+    skips = num/10
+    skips.times do 
+      page_array = @wait.until { @driver.find_elements(:class, "k-link") }
+      sleep(1)
+      page_array = @driver.find_elements(:class, "k-link")
+      sleep(1)
+      page_array[-3].click
+    end
+    page = num%10
+    page.times do
+      page_array = @wait.until { @driver.find_elements(:class, "k-link") }
+      sleep(1)
+      page_array = @driver.find_elements(:class, "k-link")
+      sleep(1)
+      page_array[-2].click
     end
   end
 end
