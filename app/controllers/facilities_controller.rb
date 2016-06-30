@@ -19,7 +19,7 @@ class FacilitiesController < ApplicationController
 
   def search
     @driver = Selenium::WebDriver.for :chrome
-    states_array = ["North%20Dakota", "Nebraska", "New%20Hampshire", "New%20Jersey", "New%20Mexico", "Nevada", "New%20York", "Ohio", "Oklahoma", "Oregon", "Pennsylvania" , "Rhode%20Island", "South%20Carolina", "South%20Dakota", "Tennessee", "Texas", "Utah", "Virginia", "Vermont", "Washington", "Wisconsin", "West%20Virginia", "Wyoming", "Alaska", "Alabama", "Arkansas", "Arizona", "California", "Colorado", "Connecticut", "District%20of%20Columbia", "Delaware", "Florida", "Georgia", "Hawaii", "Iowa", "Idaho", "Illinois", "Indiana", "Kansas", "Kentucky", "Louisiana", "Massachusetts", "Maryland", "Maine", "Michigan", "Minnesota", "Missouri", "Mississippi", "Montana", "North%20Carolina"]
+    states_array = ["Delaware", "Florida", "Georgia", "Hawaii", "Iowa", "Idaho", "Illinois", "Indiana", "Kansas", "Kentucky", "Louisiana", "Massachusetts", "Maryland", "Maine", "Michigan", "Minnesota", "Missouri", "Mississippi", "Montana", "North%20Carolina", "North%20Dakota", "Nebraska", "New%20Hampshire", "New%20Jersey", "New%20Mexico", "Nevada", "New%20York", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode%20Island", "South%20Carolina", "South%20Dakota", "Tennessee", "Texas", "Utah", "Virginia", "Vermont", "Washington", "Wisconsin", "West%20Virginia", "Wyoming", "Alaska", "Alabama", "Arkansas", "Arizona", "California", "Colorado", "Connecticut", "District%20of%20Columbia"]
     states_array.each do |state_site|
       @driver.get ("http://www.drugrehabexchange.com/find/SubstanceAbuseTreatment/?state=#{state_site}")
       @page_array = @driver.find_elements(:class, "k-link")
@@ -28,7 +28,7 @@ class FacilitiesController < ApplicationController
       @page_clicks = 1
       begin
         pages = @page_array[-1].attribute("data-page").to_i
-        (pages).times do
+        while @page_clicks < pages do
           @l = 0
           @pf = 1
           @tc = 2
@@ -73,7 +73,7 @@ class FacilitiesController < ApplicationController
           retry
         rescue Net::ReadTimeout
           puts "Net::ReadTimeout"
-          sleep(1)
+          sleep(15.minutes)
           rescue_error(state_site)
           retry
         rescue Selenium::WebDriver::Error::UnknownError
@@ -89,8 +89,8 @@ class FacilitiesController < ApplicationController
   def rescue_error(state_site)
     @driver.get ("http://www.drugrehabexchange.com/find/SubstanceAbuseTreatment/?state=#{state_site}")
     @wait = Selenium::WebDriver::Wait.new(:timeout => 20)
-    @page_array =  @wait.until { @driver.find_elements(:class, "k-link") }
     sleep(1)
+    @page_array =  @wait.until { @driver.find_elements(:class, "k-link") }
   end
 
 
