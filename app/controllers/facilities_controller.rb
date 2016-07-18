@@ -14,13 +14,35 @@ class FacilitiesController < ApplicationController
   def search
     @driver = Selenium::WebDriver.for :chrome
     states_array = ["al", "ak", "az", "ar", "ca", "co", "ct", "de", "dc", "fl", "ga", "hi", "id", "il", "in", "ia", "ks", "ky", "la", "me", "md", "ma", "mi", "mn", "ms", "mo", "mt", "ne", "nv", "nh", "nj", "nm", "ny", "nc", "nd", "oh", "ok", "or", "pa", "ri", "sc", "sd", "tn", "tx", "ut", "vt", "va", "wa", "wv", "wi", "wy"]
-
     states_array.each do |state_site|
       @driver.get ("http://www.countyoffice.org/#{state_site}-police-department/")
       @wait = Selenium::WebDriver::Wait.new(:timeout => 20)
-      page_array = @wait.until {@driver.find_elements(:class, "mob-clip")}
-      info_counter = page_array.count - 1
-      page_loop(state_site, info_counter)
+      begin
+        page_array = @wait.until {@driver.find_elements(:class, "mob-clip")}
+        info_counter = page_array.count - 1
+        page_loop(state_site, info_counter)
+
+      rescue Selenium::WebDriver::Error::StaleElementReferenceError
+        puts "Selenium::WebDriver::Error::StaleElementReferenceError"
+        sleep(1)
+        rescue_error(state_site)
+        retry
+      rescue NoMethodError
+        puts "NoMethodError"
+        sleep(1)
+        rescue_error(state_site)
+        retry
+      rescue Net::ReadTimeout
+        puts "Net::ReadTimeout"
+        sleep(15.minutes)
+        rescue_error(state_site)
+        retry
+      rescue Selenium::WebDriver::Error::UnknownError
+        puts "Selenium::WebDriver::Error::UnknownError"
+        sleep(1)
+        rescue_error(state_site)
+        retry
+      end
     end
   end
 
@@ -59,6 +81,12 @@ class FacilitiesController < ApplicationController
   def create_facility(name, city, state, address, phone)
     Facility.find_or_create_by(facility_name: name, facility_city: city, facility_state: state, facility_address: address, facility_phone_number: phone)
     @l += 1
+  end
+
+  def rescue_error(state_site)
+    @driver.get ("http://www.countyoffice.org/#{state_site}-police-department-p#{@p}/")
+    @wait = Selenium::WebDriver::Wait.new(:timeout => 20)
+    @page_array =  @wait.until { @driver.find_elements(:class, "mob-clip") }
   end
 
 end
