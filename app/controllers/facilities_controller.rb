@@ -15,10 +15,10 @@ class FacilitiesController < ApplicationController
     @driver = Selenium::WebDriver.for :chrome
     states_array = ["al", "ak", "az", "ar", "ca", "co", "ct", "de", "dc", "fl", "ga", "hi", "id", "il", "in", "ia", "ks", "ky", "la", "me", "md", "ma", "mi", "mn", "ms", "mo", "mt", "ne", "nv", "nh", "nj", "nm", "ny", "nc", "nd", "oh", "ok", "or", "pa", "ri", "sc", "sd", "tn", "tx", "ut", "vt", "va", "wa", "wv", "wi", "wy"]
 
-    state_array.each do |state_site|
+    states_array.each do |state_site|
       @driver.get ("http://www.countyoffice.org/#{state_site}-police-department/")
       @wait = Selenium::WebDriver::Wait.new(:timeout => 20)
-      page_array = @wait.until {@driver.find_elements(:xpath, "//td")}
+      page_array = @wait.until {@driver.find_elements(:class, "mob-clip")}
       info_counter = page_array.count - 1
       page_loop(state_site, info_counter)
     end
@@ -37,8 +37,9 @@ class FacilitiesController < ApplicationController
 
   def click(info_counter)
     until @l > info_counter do
-      page_array = @wait.until {@driver.find_elements(:xpath, "//td")}
-      page_array[@l].click
+      show_page = @wait.until {@driver.find_elements(:class, "mob-clip")}
+      sleep(2)
+      show_page[@l].click
       scrape
       @driver.navigate.back()
     end
@@ -46,6 +47,7 @@ class FacilitiesController < ApplicationController
 
   def scrape
     load_name = @wait.until {@driver.find_elements(:class, "name")}
+    sleep(1)
     name = load_name.first.text
     city = @driver.find_elements(:class, "addressLocality").first.text
     state = @driver.find_elements(:class, "addressRegion").first.text
@@ -56,7 +58,7 @@ class FacilitiesController < ApplicationController
 
   def create_facility(name, city, state, address, phone)
     Facility.find_or_create_by(facility_name: name, facility_city: city, facility_state: state, facility_address: address, facility_phone_number: phone)
-    @l += 3
+    @l += 1
   end
 
 end
