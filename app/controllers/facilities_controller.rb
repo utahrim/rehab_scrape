@@ -38,7 +38,7 @@ class FacilitiesController < ApplicationController
   def click(info_counter)
     until @l > info_counter do
       show_page = @wait.until {@driver.find_elements(:class, "mob-clip")}
-      sleep(2)
+      sleep(1)
       show_page[@l].click
       scrape
       @driver.navigate.back()
