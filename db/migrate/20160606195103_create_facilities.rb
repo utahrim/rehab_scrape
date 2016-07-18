@@ -3,7 +3,7 @@ class CreateFacilities < ActiveRecord::Migration
     create_table :facilities do |t|
       t.string :facility_name, null:false
       t.string :facility_city, null:false
-      t.string :facility_county, null:false
+      t.string :facility_county
       t.string :facility_state, null:false
       t.string :facility_primary_focus
       t.string :facility_type_of_care
