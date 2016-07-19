@@ -15,7 +15,7 @@ class FacilitiesController < ApplicationController
     @driver = Selenium::WebDriver.for :chrome
     states_array = ["al", "ak", "az", "ar", "ca", "co", "ct", "de", "dc", "fl", "ga", "hi", "id", "il", "in", "ia", "ks", "ky", "la", "me", "md", "ma", "mi", "mn", "ms", "mo", "mt", "ne", "nv", "nh", "nj", "nm", "ny", "nc", "nd", "oh", "ok", "or", "pa", "ri", "sc", "sd", "tn", "tx", "ut", "vt", "va", "wa", "wv", "wi", "wy"]
     states_array.each do |state_site|
-      @driver.get ("http://www.countyoffice.org/#{state_site}-police-department/")
+      @driver.get ("http://www.countyoffice.org/#{state_site}-child-support-offices/")
       @wait = Selenium::WebDriver::Wait.new(:timeout => 20)
       @p = 1
       @l = 0
@@ -53,7 +53,7 @@ class FacilitiesController < ApplicationController
     until @p > pages do
       click(info_counter)
       @p += 1
-      @driver.get ("http://www.countyoffice.org/#{state_site}-police-department-p#{@p}/")
+      @driver.get ("http://www.countyoffice.org/#{state_site}-child-support-offices-p#{@p}/")
     end
   end
 
@@ -85,7 +85,7 @@ class FacilitiesController < ApplicationController
   end
 
   def rescue_error(state_site)
-    @driver.get ("http://www.countyoffice.org/#{state_site}-police-department-p#{@p}/")
+    @driver.get ("http://www.countyoffice.org/#{state_site}-child-support-offices-p#{@p}/")
     @wait = Selenium::WebDriver::Wait.new(:timeout => 20)
     @page_array =  @wait.until { @driver.find_elements(:class, "mob-clip") }
   end
