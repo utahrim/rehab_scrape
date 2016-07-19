@@ -13,10 +13,11 @@ class FacilitiesController < ApplicationController
 
   def search
     @driver = Selenium::WebDriver.for :chrome
-    states_array = ["al", "ak", "az", "ar", "ca", "co", "ct", "de", "dc", "fl", "ga", "hi", "id", "il", "in", "ia", "ks", "ky", "la", "me", "md", "ma", "mi", "mn", "ms", "mo", "mt", "ne", "nv", "nh", "nj", "nm", "ny", "nc", "nd", "oh", "ok", "or", "pa", "ri", "sc", "sd", "tn", "tx", "ut", "vt", "va", "wa", "wv", "wi", "wy"]
+    states_array = ["ia", "ks", "ky", "la", "me", "md", "ma", "mi", "mn", "ms", "mo", "mt", "ne", "nv", "nh", "nj", "nm", "ny", "nc", "nd", "oh", "ok", "or", "pa", "ri", "sc", "sd", "tn", "tx", "ut", "vt", "va", "wa", "wv", "wi", "wy", "al", "ak", "az", "ar", "ca", "co", "ct", "de", "dc", "fl", "ga", "hi", "id", "il", "in"]
     states_array.each do |state_site|
       @driver.get ("http://www.countyoffice.org/#{state_site}-police-department/")
       @wait = Selenium::WebDriver::Wait.new(:timeout => 20)
+      @p = 1
       begin
         page_array = @wait.until {@driver.find_elements(:class, "mob-clip")}
         info_counter = page_array.count - 1
@@ -48,7 +49,6 @@ class FacilitiesController < ApplicationController
 
   def page_loop(state_site, info_counter)
     pages = @wait.until {@driver.find_elements(:xpath, "//li").last.text.to_i}
-    @p = 1
     until @p > pages do
       @l = 0
       click(info_counter)
@@ -64,6 +64,7 @@ class FacilitiesController < ApplicationController
       show_page[@l].click
       scrape
       @driver.navigate.back()
+      sleep(1)
     end
   end
 
