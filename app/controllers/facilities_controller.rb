@@ -32,22 +32,22 @@ class FacilitiesController < ApplicationController
         rescue Selenium::WebDriver::Error::StaleElementReferenceError
           puts "Selenium::WebDriver::Error::StaleElementReferenceError"
           sleep(1)
-          rescue_error(state_site)
+          rescue_error(state_site, cat)
           retry
         rescue NoMethodError
           puts "NoMethodError"
           sleep(1)
-          rescue_error(state_site)
+          rescue_error(state_site, cat)
           retry
         rescue Net::ReadTimeout
           puts "Net::ReadTimeout"
           sleep(5.minutes)
-          rescue_error(state_site)
+          rescue_error(state_site, cat)
           retry
         rescue Selenium::WebDriver::Error::UnknownError
           puts "Selenium::WebDriver::Error::UnknownError"
           sleep(1)
-          rescue_error(state_site)
+          rescue_error(state_site, cat)
           retry
         end
       end
