@@ -27,7 +27,7 @@ class FacilitiesController < ApplicationController
         begin
           page_array = @wait.until {@driver.find_elements(:class, "mob-clip")}
           info_counter = page_array.count - 1
-          page_loop(state_site, info_counter)
+          page_loop(state_site, cat, info_counter)
 
         rescue Selenium::WebDriver::Error::StaleElementReferenceError
           puts "Selenium::WebDriver::Error::StaleElementReferenceError"
@@ -54,7 +54,7 @@ class FacilitiesController < ApplicationController
     end
   end
 
-  def page_loop(state_site, info_counter)
+  def page_loop(state_site, cat, info_counter)
     pages = @wait.until {@driver.find_elements(:xpath, "//li").last.text.to_i}
     until @p > pages do
       click(info_counter)
@@ -90,7 +90,7 @@ class FacilitiesController < ApplicationController
     @l += 1
   end
 
-  def rescue_error(state_site)
+  def rescue_error(state_site, cat)
     @driver.get ("http://www.countyoffice.org/#{state_site}-#{cat}-p#{@p}/")
     @wait = Selenium::WebDriver::Wait.new(:timeout => 20)
     @page_array =  @wait.until { @driver.find_elements(:class, "mob-clip") }
