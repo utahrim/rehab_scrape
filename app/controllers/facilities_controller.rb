@@ -17,13 +17,24 @@ class FacilitiesController < ApplicationController
     @driver = Selenium::WebDriver.for :chrome
 
     states.each do |state| 
-      @driver.get ("http://www.publiclibraries.com/#{state}.htm")
-      @wait = Selenium::WebDriver::Wait.new(:timeout => 20)
-      lib_list = @wait.until {@driver.find_elements( :xpath, "//*[@id='libraries']/tbody/tr")}
-      sleep(1)
       @l = 1
-      counter = lib_list.count
-      lib_info(lib_list, counter, state)
+      begin
+        @wait = Selenium::WebDriver::Wait.new(:timeout => 20)
+        lib_list = @wait.until {@driver.find_elements( :xpath, "//*[@id='libraries']/tbody/tr")}
+        @driver.get ("http://www.publiclibraries.com/#{state}.htm")
+        sleep(1)
+        counter = lib_list.count
+        lib_info(lib_list, counter, state)
+
+      rescue Selenium::WebDriver::Error::UnknownError
+        puts "Selenium::WebDriver::Error::UnknownError"
+        retry
+
+      rescue Net::ReadTimeout
+        puts "Net::ReadTimeout"
+        sleep (5.minutes)
+        retry
+      end
     end
   end
 
