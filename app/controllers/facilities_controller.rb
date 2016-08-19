@@ -12,7 +12,7 @@ class FacilitiesController < ApplicationController
   end
 
   def search
-  states = ["alaska", "alabama", "arkansas", "arizona", "california", "colorado", "connecticut", "delaware", "florida", "georgia", "hawaii", "iowa", "idaho", "illinois", "indiana", "kansas", "kentucky", "louisiana", "massachusetts", "maryland", "maine", "michigan", "minnesota", "missouri", "mississippi", "montana", "northcarolina", "northdakota", "nebraska", "newhampshire", "newjersey", "newmexico", "nevada", "newYork", "ohio", "oklahoma", "oregon", "pennsylvania", "rhodeisland", "southcarolina", "southdakota", "tennessee", "texas", "utah", "virginia", "vermont", "washington", "wisconsin", "westVirginia", "wyoming" ]
+  states = ["california", "colorado", "connecticut", "delaware", "florida", "georgia", "hawaii", "iowa", "idaho", "illinois", "indiana", "kansas", "kentucky", "louisiana", "massachusetts", "maryland", "maine", "michigan", "minnesota", "missouri", "mississippi", "montana", "northcarolina", "northdakota", "nebraska", "newhampshire", "newjersey", "newmexico", "nevada", "newYork", "ohio", "oklahoma", "oregon", "pennsylvania", "rhodeisland", "southcarolina", "southdakota", "tennessee", "texas", "utah", "virginia", "vermont", "washington", "wisconsin", "westVirginia", "wyoming", "alaska", "alabama", "arkansas", "arizona"]
     
     @driver = Selenium::WebDriver.for :chrome
 
@@ -23,9 +23,9 @@ class FacilitiesController < ApplicationController
         lib_list = @wait.until {@driver.find_elements( :xpath, "//*[@id='libraries']/tbody/tr")}
         @driver.get ("http://www.publiclibraries.com/#{state}.htm")
         sleep(1)
+        lib_list = @driver.find_elements( :xpath, "//*[@id='libraries']/tbody/tr")
         counter = lib_list.count
         lib_info(lib_list, counter, state)
-
       rescue Selenium::WebDriver::Error::UnknownError
         puts "Selenium::WebDriver::Error::UnknownError"
         retry
@@ -40,6 +40,7 @@ class FacilitiesController < ApplicationController
 
 
   def lib_info(lib_list, counter, state)
+    lib_list = @wait.until {@driver.find_elements( :xpath, "//*[@id='libraries']/tbody/tr")}
     until @l >= counter do
       info = lib_list[@l].find_elements(:css, "td")
       info_scrape(info, state)
