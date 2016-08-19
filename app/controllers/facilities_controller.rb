@@ -12,82 +12,45 @@ class FacilitiesController < ApplicationController
   end
 
   def search
+  states = ["alaska", "alabama", "arkansas", "arizona", "california", "colorado", "connecticut", "delaware", "florida", "georgia", "hawaii", "iowa", "idaho", "illinois", "indiana", "kansas", "kentucky", "louisiana", "massachusetts", "maryland", "maine", "michigan", "minnesota", "missouri", "mississippi", "montana", "northcarolina", "northdakota", "nebraska", "newhampshire", "newjersey", "newmexico", "nevada", "newYork", "ohio", "oklahoma", "oregon", "pennsylvania", "rhodeisland", "southcarolina", "southdakota", "tennessee", "texas", "utah", "virginia", "vermont", "washington", "wisconsin", "westVirginia", "wyoming" ]
+    
     @driver = Selenium::WebDriver.for :chrome
-    states_array = ["ia", "ks", "ky", "la", "me", "md", "ma", "mi", "mn", "ms", "mo", "mt", "ne", "nv", "nh", "nj", "nm", "ny", "nc", "nd", "oh", "ok", "or", "pa", "ri", "sc", "sd", "tn", "tx", "ut", "vt", "va", "wa", "wv", "wi", "wy", "al", "ak", "az", "ar", "ca", "co", "ct", "de", "dc", "fl", "ga", "hi", "id", "il", "in"]
-    states_array.each do |state_site|
-      @driver.get ("http://www.countyoffice.org/#{state_site}-police-department/")
+
+    states.each do |state| 
+      @driver.get ("http://www.publiclibraries.com/#{state}.htm")
       @wait = Selenium::WebDriver::Wait.new(:timeout => 20)
-      @p = 1
-      begin
-        page_array = @wait.until {@driver.find_elements(:class, "mob-clip")}
-        info_counter = page_array.count - 1
-        page_loop(state_site, info_counter)
-
-      rescue Selenium::WebDriver::Error::StaleElementReferenceError
-        puts "Selenium::WebDriver::Error::StaleElementReferenceError"
-        sleep(1)
-        rescue_error(state_site)
-        retry
-      rescue NoMethodError
-        puts "NoMethodError"
-        sleep(1)
-        rescue_error(state_site)
-        retry
-      rescue Net::ReadTimeout
-        puts "Net::ReadTimeout"
-        sleep(15.minutes)
-        rescue_error(state_site)
-        retry
-      rescue Selenium::WebDriver::Error::UnknownError
-        puts "Selenium::WebDriver::Error::UnknownError"
-        sleep(1)
-        rescue_error(state_site)
-        retry
-      end
-    end
-  end
-
-  def page_loop(state_site, info_counter)
-    pages = @wait.until {@driver.find_elements(:xpath, "//li").last.text.to_i}
-    until @p > pages do
-      @l = 0
-      click(info_counter)
-      @p += 1
-      @driver.get ("http://www.countyoffice.org/#{state_site}-police-department-p#{@p}/")
-    end
-  end
-
-  def click(info_counter)
-    until @l > info_counter do
-      show_page = @wait.until {@driver.find_elements(:class, "mob-clip")}
+      lib_list = @wait.until {@driver.find_elements( :xpath, "//*[@id='libraries']/tbody/tr")}
       sleep(1)
-      show_page[@l].click
-      scrape
-      @driver.navigate.back()
-      sleep(1)
+      @l = 1
+      counter = lib_list.count
+      lib_info(lib_list, counter, state)
     end
   end
 
-  def scrape
-    load_name = @wait.until {@driver.find_elements(:class, "name")}
-    sleep(1)
-    name = load_name.first.text
-    city = @driver.find_elements(:class, "addressLocality").first.text
-    state = @driver.find_elements(:class, "addressRegion").first.text
-    address = @driver.find_elements(:class, "address").first.text
-    phone = @driver.find_elements(:class, "telephone").first.text
-    create_facility(name, city, state, address, phone)
+
+  def lib_info(lib_list, counter, state)
+    until @l >= counter do
+      info = lib_list[@l].find_elements(:css, "td")
+      info_scrape(info, state)
+    end
   end
 
-  def create_facility(name, city, state, address, phone)
-    Facility.find_or_create_by(facility_name: name, facility_city: city, facility_state: state, facility_address: address, facility_phone_number: phone)
-    @l += 1
+  def info_scrape(info, state)
+    name = info[1].text
+    city = info.first.text
+    address = info[2].text
+    zip = info[3].text
+    phone = info[4].text
+    create_facility(name, state, city, address, zip, phone)
   end
 
-  def rescue_error(state_site)
-    @driver.get ("http://www.countyoffice.org/#{state_site}-police-department-p#{@p}/")
-    @wait = Selenium::WebDriver::Wait.new(:timeout => 20)
-    @page_array =  @wait.until { @driver.find_elements(:class, "mob-clip") }
+  def create_facility(name, state, city, address, zip, phone)
+    Facility.find_or_create_by(facility_name: name, facility_state: state, facility_city: city, facility_address: address, facility_zip_code: zip, facility_phone_number: phone)
+    @l +=1
   end
+
 
 end
+
+
+
