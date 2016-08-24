@@ -13,101 +13,109 @@ class FacilitiesController < ApplicationController
 
   def search
     @driver = Selenium::WebDriver.for :chrome
+    @wait = Selenium::WebDriver::Wait.new(:timeout => 20)
 
-    states_array = ["al", "ak", "az", "ar", "ca", "co", "ct", "de", "dc", "fl", "ga", "hi", "ID", "il", "in", "ia", "ks", "ky", "la", "me", "md", "ma", "mi", "mn", "ms", "mo", "mt", "ne", "nv", "nh", "nj", "nm", "ny", "nc", "nd", "oh", "ok", "or",  "pa", "ri", "sc", "sd", "tn", "tx", "ut", "vt", "va", "wa", "wv", "wi", "wy"]
+    states = ["Texas", "Hawaii", "Iowa", "Idaho", "Illinois", "Indiana", "Kansas", "Kentucky", "Louisiana", "Massachusetts", "Maryland", "Maine", "Michigan", "Minnesota", "Missouri", "Mississippi", "Montana", "North-Carolina", "North-Dakota", "New-Hampshire", "Nebraska", "New-Jersey", "New-Mexico", "Nevada", "New-York", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode-Island", "South-Carolina", "South-Dakota", "Tennessee", "Utah", "Virginia", "Vermont", "Washington", "Wisconsin", "West-Virginia", "Wyoming", "Alaska", "Alabama", "Arkansas", "Arizona", "California", "Colorado", "Connecticut", "District-of-Columbia", "Delaware", "Florida", "Georgia"]
 
-    states_array.each do |state_site|
-      @driver.get ("https://www.brbpublications.com/freesites/FreeSitesState.aspx?S1=#{state_site}")
-      @wait = Selenium::WebDriver::Wait.new(:timeout => 20)
-      county_list = ["ContentPlaceHolder1_CellCountyList", "ContentPlaceHolder1_CellCountyList2"]
-      county_list.each do |number|
-        @l = 0
-        begin
-          list_array = @wait.until {@driver.find_elements(:id, "#{number}")}
-          sleep(1)
-          list = list_array.first.find_elements(:css, 'a')
-          info_counter = list.count - 1
-          click(info_counter, number)
+      #Georgia
+      #New-Hampshire
+      #Texas
+    states.each do |state|
+      @l = 0
+      begin
+        @driver.get("http://www.firedepartment.net/directory/#{state}")
+        county_array = @wait.until {@driver.find_elements(:xpath, "//*[@id='content']/div/div[1]/div[2]/table/tbody/tr")}
+        counter = county_array.count
+        info_scrape(county_array, counter, state)
 
-        rescue Selenium::WebDriver::Error::StaleElementReferenceError
-          puts "Selenium::WebDriver::Error::StaleElementReferenceError"
-          sleep(1)
-          rescue_error(state_site, number)
-          retry
-        rescue NoMethodError
-          puts "NoMethodError"
-          sleep(1)
-          @l += 1
-          rescue_error(state_site, number)
-          retry
-        rescue Net::ReadTimeout
-          puts "Net::ReadTimeout"
-          sleep(10.minutes)
-          rescue_error(state_site, number)
-          retry
-        rescue Selenium::WebDriver::Error::UnknownError
-          puts "Selenium::WebDriver::Error::UnknownError"
-          sleep(1)
-          rescue_error(state_site, number)
-          retry
-        end
+      rescue Net::ReadTimeout
+        puts "Net::ReadTimeout"
+        sleep (5.minutes)
+      retry
       end
     end
   end
 
-  # def page_loop(state_site, info_counter)
-  #   until @p > pages || @p > 25 do
-  #     click(info_counter)
-  #     @p += 1
-  #     @driver.get ("https://www.brbpublications.com/freesites/FreeSitesState.aspx?S1={state_site}")
-  #   end
-  # end
 
-  def click(info_counter, number)
-    until @l > info_counter do
-      state_page = @wait.until {@driver.find_elements(:id, "#{number}")}
-      list = state_page.first.find_elements(:css, 'a')
-      sleep(1)
-      list[@l].click
-      scrape
+  def info_scrape(county_array, counter, state)
+    until @l >= counter do
+      county_array = @wait.until {@driver.find_elements(:xpath, "//*[@id='content']/div/div[1]/div[2]/table/tbody/tr")}
+      county_array[@l].find_element(:css, "a").click
+      county_scrape(state)
       @driver.navigate.back()
-      sleep(1)
     end
   end
 
-  def scrape
-    info_list = @wait.until {@driver.find_elements(:xpath, "//table[2]/tbody/tr/td[@align='left']/font")}
+  def county_scrape(state)
+    county = @wait.until {@driver.find_element(:xpath, "/html/body/div[2]/div[2]/div/span").text}
     sleep(1)
-    counter = info_list.count - 3
+    county = @driver.find_element(:xpath, "/html/body/div[2]/div[2]/div/span").text
     @i = 0
-    until @i > counter
-      info_list = @driver.find_elements(:xpath, "//table[2]/tbody/tr/td[@align='left']/font")
-      get_info(info_list)
+    fire_dep = @driver.find_elements(:class, "department")
+    counter1 = fire_dep.count
+    until @i >= counter1 do
+      begin
+        fire_dep = @wait.until {@driver.find_elements(:class, "department")}
+        sleep(1)
+        fire_dep = @driver.find_elements(:class, "department")
+        name = fire_dep[@i].text
+        fire_dep[@i].click
+        data_scrape(name, state, county)
+        @driver.navigate.back()
+
+      rescue Selenium::WebDriver::Error::StaleElementReferenceError
+        puts "Selenium::WebDriver::Error::StaleElementReferenceError"
+        @driver.navigate.back()
+        @i +=1
+        retry
+
+      rescue Selenium::WebDriver::Error::UnknownError
+        puts "Selenium::WebDriver::Error::UnknownError"
+        @i +=1
+        retry
+
+      rescue Selenium::WebDriver::Error::TimeOutError
+        puts "Selenium::WebDriver::Error::TimeOutError"
+        @driver.navigate.back()
+        @i +=1
+        retry
+
+      rescue NoMethodError
+        puts "NoMethodError"
+        @i +=1
+        retry
+      end
     end
     @l += 1
   end
 
-  def get_info(info_list)
-    info_array = info_list[@i].text.split("\n")
-    name = info_array[0]
-    address = info_array[1]
-    place = info_array[2].split(", ")
-    city = place[0]
-    state = place[1].split(" ").first
-    zip = place[1].split(" ").last
-    phone = info_array[-3].match(/\d.+/)[0]
-    extra_info = info_array.last
-    create_facility(name, city, state, zip, address, phone, extra_info)
+  def data_scrape(name, state, county)
+    address = @wait.until {@driver.find_element(:xpath, "//div[@itemprop='streetAddress']").text}
+    city = @driver.find_element(:xpath, "//span[@itemprop='addressLocality']").text
+    zip_code = @driver.find_element(:xpath, "//span[@itemprop='postalCode']").text
+    
+    begin
+      phone_text = @driver.find_element(:class, "phone").text
+      phone = phone_text.match(/\W\d+\W+\d+\W+\d+/)[0]
+    rescue Selenium::WebDriver::Error::NoSuchElementError
+      phone = ""
+    rescue NoMethodError
+      phone = ""
+    end
+    record_data(name, state, county, city, address, zip_code, phone)
   end
 
-  def create_facility(name, city, state, zip, address, phone, extra_info)
-    Facility.find_or_create_by(facility_name: name, facility_city: city, facility_state: state, facility_zip: zip, facility_address: address, facility_phone_number: phone, facility_extra_info: extra_info)
+  def record_data(name, state, county, city, address, zip_code, phone)
+    Facility.find_or_create_by(facility_name: name, facility_state: state, facility_county: county, facility_city: city, facility_address: address, facility_zip: zip_code, facility_phone_number: phone)
     @i += 1
   end
 
-  def rescue_error(state_site, number)
-    @driver.get ("https://www.brbpublications.com/freesites/FreeSitesState.aspx?S1=#{state_site}")
-    @wait = Selenium::WebDriver::Wait.new(:timeout => 20)
-    list_array = @wait.until {@driver.find_elements(:id, "#{number}")}
-  end
+
+  # def rescue_error(state_site, number)
+  #   @driver.get ("https://www.brbpublications.com/freesites/FreeSitesState.aspx?S1=#{state_site}")
+  #   @wait = Selenium::WebDriver::Wait.new(:timeout => 20)
+  #   list_array = @wait.until {@driver.find_elements(:id, "#{number}")}
+  # end
 end
+
+

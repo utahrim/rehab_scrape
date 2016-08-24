@@ -1,6 +1,6 @@
 class Facility < ActiveRecord::Base
   def self.to_csv
-    attributes = %w{id facility_name facility_city facility_county facility_state facility_zip facility_address facility_phone_number facility_extra_info}
+    attributes = %w{name state county city address zip_code phone}
 
     CSV.generate(headers: true) do |csv|
       csv << attributes
