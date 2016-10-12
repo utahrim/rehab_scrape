@@ -12,19 +12,16 @@ class FacilitiesController < ApplicationController
   end
 
 
-  # 
+  #  "dc", 
   def search
     @driver = Selenium::WebDriver.for :chrome
-    states_array = ["hi", "id", "il", "in", "ia", "ks", "ky", "la", "ma", "me", "md", "mi", "mn", "ms", "mo", "mt", "ne", "nv", "nj", "nh", "nm", "ny", "nc", "nd", "oh", "ok", "or", "pa", "ri", "sc", "sd", "tn", "tx", "ut", "va", "vt", "wa", "wv", "wi", "wy", "al", "ak", "az", "ar", "ca", "co", "ct", "de", "dc", "fl", "ga"]
+    states_array = ["ga", "hi", "id", "il", "in", "ia", "ks", "ky", "la", "ma", "me", "md", "mi", "mn", "ms", "mo", "mt", "ne", "nv", "nj", "nh", "nm", "ny", "nc", "nd", "oh", "ok", "or", "pa", "ri", "sc", "sd", "tn", "tx", "ut", "va", "vt", "wa", "wv", "wi", "wy", "al", "ak", "az", "ar", "ca", "co", "ct", "de", "fl"]
     states_array.each do |state_site|
       @driver.get ("http://www.countyoffice.org/#{state_site}-hospitals/")
       @wait = Selenium::WebDriver::Wait.new(:timeout => 20)
-      @p = 0
       @l = 0
       @c = 0
-      if state_site == "dc"
-        get_pages(state_site, "DC")
-      end
+
       begin
         county_list = @wait.until {@driver.find_elements(:xpath, "/html/body/div[2]/div/div[2]/div[4]/div/a")}
         county_count = county_list.count
@@ -63,8 +60,9 @@ class FacilitiesController < ApplicationController
   end
 
   def get_pages(state_site, county)
+    @p = 1
     pages = @wait.until {@driver.find_elements(:xpath, "/html/body/div[2]/div/div[1]/nav[1]/ul/li").last.text.to_i}
-    until @p >= pages do
+    until @p > pages do
       click_facility(state_site, county)
     end
     @driver.get ("http://www.countyoffice.org/#{state_site}-hospitals/")
@@ -100,10 +98,11 @@ class FacilitiesController < ApplicationController
       page_array = @wait.until {@driver.find_elements(:class, "mob-clip")}
       page_array[@l].click()
       scrape(state_site, county)
+      @l += 1
     end
     @p += 1
     @l = 0
-    @driver.get("http://www.countyoffice.org/#{state_site}-#{county.gsub(" ", "-")}-hospitals-p#{@p}/")
+    @driver.get("http://www.countyoffice.org/#{state_site}-#{county.downcase.gsub(" ", "-")}-hospitals-p#{@p}/")
   end
 
   def scrape(state_site, county)
@@ -132,7 +131,6 @@ class FacilitiesController < ApplicationController
 
   def create_facility(name, city, state, county, address, phone)
     Facility.find_or_create_by(facility_name: name, facility_city: city, facility_state: state, facility_county: county, facility_address: address, facility_phone_number: phone)
-    @l += 1
   end
 
   def rescue_error(state_site)
