@@ -15,13 +15,12 @@ class FacilitiesController < ApplicationController
   #  At the end do: get_pages("dc", "DC")
   def search
     @driver = Selenium::WebDriver.for :chrome
-    states_array = ["dc", "al", "ak", "az", "ar", "ca", "co", "ct", "de", "fl", "ga", "hi", "id", "il", "in", "ia", "ks", "ky", "la", "ma", "me", "md", "mi", "mn", "ms", "mo", "mt", "ne", "nv", "nj", "nh", "nm", "ny", "nc", "nd", "oh", "ok", "or", "pa", "ri", "sc", "sd", "tn", "tx", "ut", "va", "vt", "wa", "wv", "wi", "wy"]
+    states_array = ["al", "ak", "az", "ar", "ca", "co", "ct", "de", "fl", "ga", "hi", "id", "il", "in", "ia", "ks", "ky", "la", "ma", "me", "md", "mi", "mn", "ms", "mo", "mt", "ne", "nv", "nj", "nh", "nm", "ny", "nc", "nd", "oh", "ok", "or", "pa", "ri", "sc", "sd", "tn", "tx", "ut", "va", "vt", "wa", "wv", "wi", "wy"]
     states_array.each do |state_site|
       @driver.get ("http://www.countyoffice.org/#{state_site}-courts/")
       @wait = Selenium::WebDriver::Wait.new(:timeout => 20)
       @l = 0
       @c = 0
-      get_pages("dc", "DC")
       begin
         county_list = @wait.until {@driver.find_elements(:xpath, "/html/body/div[2]/div/div[2]/div[4]/div/a")}
         county_count = county_list.count
