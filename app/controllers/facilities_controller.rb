@@ -12,16 +12,16 @@ class FacilitiesController < ApplicationController
   end
 
 
-  #  "dc", 
+  #  At the end do: get_pages("dc", "DC")
   def search
     @driver = Selenium::WebDriver.for :chrome
-    states_array = ["ga", "hi", "id", "il", "in", "ia", "ks", "ky", "la", "ma", "me", "md", "mi", "mn", "ms", "mo", "mt", "ne", "nv", "nj", "nh", "nm", "ny", "nc", "nd", "oh", "ok", "or", "pa", "ri", "sc", "sd", "tn", "tx", "ut", "va", "vt", "wa", "wv", "wi", "wy", "al", "ak", "az", "ar", "ca", "co", "ct", "de", "fl"]
+    states_array = ["dc", "al", "ak", "az", "ar", "ca", "co", "ct", "de", "fl", "ga", "hi", "id", "il", "in", "ia", "ks", "ky", "la", "ma", "me", "md", "mi", "mn", "ms", "mo", "mt", "ne", "nv", "nj", "nh", "nm", "ny", "nc", "nd", "oh", "ok", "or", "pa", "ri", "sc", "sd", "tn", "tx", "ut", "va", "vt", "wa", "wv", "wi", "wy"]
     states_array.each do |state_site|
-      @driver.get ("http://www.countyoffice.org/#{state_site}-hospitals/")
+      @driver.get ("http://www.countyoffice.org/#{state_site}-courts/")
       @wait = Selenium::WebDriver::Wait.new(:timeout => 20)
       @l = 0
       @c = 0
-
+      get_pages("dc", "DC")
       begin
         county_list = @wait.until {@driver.find_elements(:xpath, "/html/body/div[2]/div/div[2]/div[4]/div/a")}
         county_count = county_list.count
@@ -65,7 +65,7 @@ class FacilitiesController < ApplicationController
     until @p > pages do
       click_facility(state_site, county)
     end
-    @driver.get ("http://www.countyoffice.org/#{state_site}-hospitals/")
+    @driver.get ("http://www.countyoffice.org/#{state_site}-courts/")
   end
 
 
@@ -75,18 +75,17 @@ class FacilitiesController < ApplicationController
     else
       get_info(state_site, county)
     end
-    @driver.get ("http://www.countyoffice.org/#{state_site}-hospitals/")
+    @driver.get ("http://www.countyoffice.org/#{state_site}-courts/")
   end
 
   def get_info(state_site, county)
-    @f = 0
      f_array = @wait.until {@driver.find_elements(:class, "dl-horizontal")}
      f_count = f_array.count
      if f_count == 1
       scrape(state_site, county)
     else
-      until @f >= f_count do
-        scrape2(state_site, county)
+      f_array.each do |f|
+        scrape2(state_site, county, f)
       end
     end
   end
@@ -102,39 +101,38 @@ class FacilitiesController < ApplicationController
     end
     @p += 1
     @l = 0
-    @driver.get("http://www.countyoffice.org/#{state_site}-#{county.downcase.gsub(" ", "-")}-hospitals-p#{@p}/")
+    @driver.get("http://www.countyoffice.org/#{state_site}-#{county.downcase.gsub(" ", "-")}-courts-p#{@p}/")
   end
 
   def scrape(state_site, county)
-    load_name = @wait.until {@driver.find_elements(:class, "name")}
-    name = load_name.first.text
+    name = @wait.until {@driver.find_elements(:class, "name").first.text}
     city = @driver.find_elements(:class, "addressLocality").first.text
     state = @driver.find_elements(:class, "addressRegion").first.text
     address = @driver.find_elements(:class, "address").first.text
     phone = @driver.find_elements(:class, "telephone").blank? ? nil : @driver.find_elements(:class, "telephone").first.text
+    fax = @driver.find_elements(:class, "fax").blank? ? nil : @driver.find_elements(:class, "fax").first.text
     county = county
-    create_facility(name, city, state, county, address, phone)
+    create_facility(name, city, state, county, address, phone, fax)
     @driver.navigate.back()
   end
 
-  def scrape2(state_site, county)
-    load_name = @wait.until {@driver.find_elements(:class, "name")}
-    name = load_name[@f].text
-    city = @driver.find_elements(:class, "addressLocality")[@f].text
-    state = @driver.find_elements(:class, "addressRegion")[@f].text
-    address = @driver.find_elements(:class, "address")[@f].text
-    phone = @driver.find_elements(:class, "telephone").blank? ? nil : @driver.find_elements(:class, "telephone")[@f].text
+  def scrape2(state_site, county, f)
+    name = @wait.until {f.find_elements(:class, "name").first.text}
+    city = f.find_elements(:class, "addressLocality").first.text
+    state = f.find_elements(:class, "addressRegion").first.text
+    address = f.find_elements(:class, "address").first.text
+    phone = f.find_elements(:class, "telephone").blank? ? nil : f.find_elements(:class, "telephone").first.text
+    fax = f.find_elements(:class, "fax").blank? ? nil : f.find_elements(:class, "fax").first.text
     county = county
-    create_facility(name, city, state, county, address, phone)
-    @f += 1
+    create_facility(name, city, state, county, address, phone, fax)
   end
 
-  def create_facility(name, city, state, county, address, phone)
-    Facility.find_or_create_by(facility_name: name, facility_city: city, facility_state: state, facility_county: county, facility_address: address, facility_phone_number: phone)
+  def create_facility(name, city, state, county, address, phone, fax)
+    Facility.find_or_create_by(facility_name: name, facility_city: city, facility_state: state, facility_county: county, facility_address: address, facility_phone_number: phone, facility_fax: fax)
   end
 
   def rescue_error(state_site)
-    @driver.get ("http://www.countyoffice.org/#{state_site}-hospitals/")
+    @driver.get ("http://www.countyoffice.org/#{state_site}-courts/")
     @wait = Selenium::WebDriver::Wait.new(:timeout => 20)
     @page_array =  @wait.until { @driver.find_elements(:class, "mob-clip") }
     @l += 1
