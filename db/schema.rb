@@ -17,20 +17,35 @@ ActiveRecord::Schema.define(version: 20160606195103) do
   enable_extension "plpgsql"
 
   create_table "facilities", force: :cascade do |t|
-    t.string   "facility_name",          null: false
-    t.string   "facility_city"
-    t.string   "facility_county"
-    t.string   "facility_zip"
-    t.string   "facility_state"
-    t.string   "facility_primary_focus"
-    t.string   "facility_type_of_care"
-    t.string   "facility_address"
-    t.string   "facility_phone_number"
-    t.string   "facility_fax"
-    t.string   "facility_extra_info"
-    t.string   "facility_url"
-    t.datetime "created_at",             null: false
-    t.datetime "updated_at",             null: false
+    t.string   "name",                null: false
+    t.string   "city"
+    t.string   "state"
+    t.string   "address"
+    t.string   "zip"
+    t.string   "county"
+    t.string   "phone_number"
+    t.string   "description"
+    t.string   "classification"
+    t.string   "year_built"
+    t.string   "annual_rounds"
+    t.string   "manager"
+    t.string   "architect"
+    t.string   "superintendent"
+    t.string   "professional"
+    t.string   "director_of_golf"
+    t.string   "guest_policy"
+    t.string   "dress_code"
+    t.string   "website"
+    t.string   "holes"
+    t.string   "greens"
+    t.string   "fairways"
+    t.string   "water_hazards"
+    t.string   "bunkers"
+    t.string   "driving_range"
+    t.string   "greens_fee_weekend"
+    t.string   "greens_fee_weekdays"
+    t.datetime "created_at",          null: false
+    t.datetime "updated_at",          null: false
   end
 
 end
