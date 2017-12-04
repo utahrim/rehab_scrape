@@ -13,27 +13,38 @@ class FacilitiesController < ApplicationController
 
   #  At the end do: get_pages("dc", "DC")
   # "al", "ak", "az", "ar", "ca", "co", "ct", "de", "fl", "ga", "id", "il", "in", "ia", "ks", "ky", "la", "ma", "me", "md", "mi", "mn", "ms", "mo", "mt", "ne", "nv", "nj", "nh", "nm", "ny", "nc", "nd", "oh", "ok", "or", "pa", "ri", "sc", "sd", "tn", "tx", "ut", "va", "vt", "wa", "wv", "wi", "wy", "hi", "dc"   
+  
+  {"AL" => "Alabama", "AK" => "Alaska", "AZ" => "Arizona", "AR" => "Arkansas", "CA" => "California", "CO" => "Colorado", "CT" => "Connecticut", "DE" => "Delaware", "DC" => "District of Columbia", "FL" => "Florida", "GA" => "Georgia", "HI" => "Hawaii", "ID" => "Idaho", "IL" => "Illinois", "IN" => "Indiana", "IA" => "Iowa", "KS" => "Kansas", "KY" => "Kentucky", "LA" => "Louisiana", "ME" => "Maine", "MD" => "Maryland", "MA" => "Massachusetts", "MI" => "Michigan", "MN" => "Minnesota", "MS" => "Mississippi", "MO" => "Missouri", "MT" => "Montana", "NE" => "Nebraska", "NV" => "Nevada", "NH" => "New Hampshire", "NJ" => "New Jersey", "NM" => "New Mexico", "NY" => "New York", "NC" => "North Carolina", "ND" => "North Dakota", "OH" => "Ohio", "OK" => "Oklahoma", "OR" => "Oregon", "PA" => "Pennsylvania", "RI" => "Rhode Island", "SC" => "South Carolina", "SD" => "South Dakota", "TN" => "Tennessee", "TX" => "Texas", "UT" => "Utah", "VT" => "Vermont", "VA" => "Virginia", "WA" => "Washington", "WV" => "West Virginia", "WI" => "Wisconsin", "WY" => "Wyoming"}
+
+
+
+
   def search
     @driver = Selenium::WebDriver.for :chrome
-    states_array = ["al", "ak", "az", "ar", "ca", "co", "ct", "de", "fl", "ga", "id", "il", "in", "ia", "ks", "ky", "la", "ma", "me", "md", "mi", "mn", "ms", "mo", "mt", "ne", "nv", "nj", "nh", "nm", "ny", "nc", "nd", "oh", "ok", "or", "pa", "ri", "sc", "sd", "tn", "tx", "ut", "va", "vt", "wa", "wv", "wi", "wy", "hi", "dc"]
-    states_array.each do |state_site|
-      @driver.get ("http://www.countyoffice.org/#{state_site}-daycare/")
+    states_hash = {"AL" => "Alabama", "AK" => "Alaska", "AZ" => "Arizona", "AR" => "Arkansas", "CA" => "California", "CO" => "Colorado", "CT" => "Connecticut", "DE" => "Delaware", "DC" => "District of Columbia", "FL" => "Florida", "GA" => "Georgia", "HI" => "Hawaii", "ID" => "Idaho", "IL" => "Illinois", "IN" => "Indiana", "IA" => "Iowa", "KS" => "Kansas", "KY" => "Kentucky", "LA" => "Louisiana", "ME" => "Maine", "MD" => "Maryland", "MA" => "Massachusetts", "MI" => "Michigan", "MN" => "Minnesota", "MS" => "Mississippi", "MO" => "Missouri", "MT" => "Montana", "NE" => "Nebraska", "NV" => "Nevada", "NH" => "New Hampshire", "NJ" => "New Jersey", "NM" => "New Mexico", "NY" => "New York", "NC" => "North Carolina", "ND" => "North Dakota", "OH" => "Ohio", "OK" => "Oklahoma", "OR" => "Oregon", "PA" => "Pennsylvania", "RI" => "Rhode Island", "SC" => "South Carolina", "SD" => "South Dakota", "TN" => "Tennessee", "TX" => "Texas", "UT" => "Utah", "VT" => "Vermont", "VA" => "Virginia", "WA" => "Washington", "WV" => "West Virginia", "WI" => "Wisconsin", "WY" => "Wyoming"}
+
+    states_hash.each do |state_site|
+      @driver.get ("https://www.homehealthcareagencies.com/directory/#{state_site[0]}/")
       @wait = Selenium::WebDriver::Wait.new(:timeout => 60)
-      if state_site == states_array.first
+      if state_site[0] == states_hash.first.first
         @c = 0
       else
         @c = 0
       end
-      @l = 0
+      @cl = 0
+      @l = 1
       @check_error = 0
       begin
-        county_count = county_check(@wait.until {@driver.find_elements(:xpath, "/html/body/div[1]/div/div[1]/div[3]/div")})
-        until @c >= county_count do
-          county_list = @wait.until {@driver.find_elements(:xpath, "/html/body/div[1]/div/div[1]/div[3]/div").first.find_elements(:css, "a")}
-          county = county_list[@c].text
-          @driver.get(county_list[@c].attribute("href"))
-          check_page(state_site, county)
-          @c += 1
+        city_list_row_count = @wait.until{@driver.find_elements(:class, "col-sm-4").count}
+        until @cl >= city_list_row_count do
+          city_list_count = @wait.until {@driver.find_elements(:class, "col-sm-4")[@cl].find_elements(:css, "a").count}
+          until @c >= city_list_count
+            city_list = @driver.find_elements(:class, "col-sm-4")[@cl].find_elements(:css, "a")
+            get_city(state_site, city_list[@c])
+            @c += 1
+          end
+          @c = 0
+          @cl += 1
         end
       rescue Selenium::WebDriver::Error::StaleElementReferenceError
         puts "Selenium::WebDriver::Error::StaleElementReferenceError"
@@ -42,18 +53,25 @@ class FacilitiesController < ApplicationController
         retry
       rescue NoMethodError
         puts "NoMethodError"
-        sleep(1)
+        sleep(3)
         rescue_error(state_site)
         retry
       rescue Net::ReadTimeout
         puts "Net::ReadTimeout"
         sleep(20)
-        @driver.navigate().refresh()
+        @driver.navigate.refresh()
+        rescue_error(state_site)
+        retry
+      rescue Selenium::WebDriver::Error::TimeOutError
+        puts "Selenium::WebDriver::Error::TimeOutError"
+        sleep(1)
+        if @driver.current_url.split("-")[1] == "touch"
+          @driver.navigate.back()
+        end
         rescue_error(state_site)
         retry
       rescue Selenium::WebDriver::Error::UnknownError
         puts "Selenium::WebDriver::Error::UnknownError"
-        binding.pry
         if @check_error == 0 || @check_error != @l
           @check_error = @l
         elsif @check_error == @l
@@ -66,120 +84,88 @@ class FacilitiesController < ApplicationController
     end
   end
 
-  def county_check(county_list)
-    if county_list == []
-      @c = 1
-      county_count = 0
-    else
-      county_list = @wait.until {@driver.find_elements(:xpath, "/html/body/div[1]/div/div[1]/div[3]/div").first.find_elements(:css, "a")}
-      county_count = county_list.count
-    end
+  def get_city(state_site, city)
+    sleep(0.3)
+    @driver.get(city.attribute("href"))
+    city_facility(state_site)
   end
 
-  def get_pages(state_site, county)
-    @p = 1
-    pages = number_of_pages(@wait.until {@driver.find_elements(:xpath, "/html/body/div[1]/div/div[1]/nav/ul/li")})
-    until @p > pages do
-      click_facility(state_site, county)
-    end
-    @driver.get ("http://www.countyoffice.org/#{state_site}-daycare/")
-  end
-
-  def number_of_pages(list)
-    if list !=[]
-      return @wait.until {@driver.find_elements(:xpath, "/html/body/div[1]/div/div[1]/nav/ul/li").last.text.to_i}
-    else
-      return 1
-    end
-  end
-
-
-  def check_page(state_site, county)
-    if @wait.until {@driver.find_elements(:class, "condensed-listing")} != []
-      get_pages(state_site, county)
-    else
-      get_info(state_site, county)
-    end
-    @driver.get ("http://www.countyoffice.org/#{state_site}-daycare/")
-  end
-
-  def get_info(state_site, county)
-    f_array = @wait.until {@driver.find_elements(:class, "dl-horizontal")}
-    f_count = f_array.count
-    if f_count == 1
-      scrape(state_site, county)
-    else
-      f_array.each do |f|
-        scrape2(state_site, county, f)
+  def city_facility(state_site)
+    facility_list_count = @wait.until {@driver.find_element(:class, "striped-rows").find_elements(:class, "row").count}
+    until @l >= facility_list_count do
+      facility_list = @wait.until {@driver.find_element(:class, "striped-rows").find_elements(:class, "row")[@l]}
+      if facility_list.text.split("\n").last == "Click to Show Phone"
+        binding.pry
       end
+      facility_list = @wait.until {@driver.find_element(:class, "striped-rows").find_elements(:class, "row")[@l].find_elements(:css, "div")}
+      get_info(state_site, facility_list)
     end
+    @l = 1
   end
 
-  def click_facility(state_site, county)
-    facility_array = @wait.until {@driver.find_elements(:class, "condensed-listing")}
-    counter = facility_array.count
-    until @l >= counter do
-      page_array = @wait.until {@driver.find_elements(:class, "condensed-listing")}
-      f_page = page_array[@l].find_element(:css, "a").attribute("href")
-      @driver.get("#{f_page}")
-      scrape(state_site, county)
+  def get_info(state_site, facility)
+    if facility.count <= 1
+      @l += 1
+    else
+      info_check(state_site, facility)
       @l += 1
     end
-    @p += 1
-    @l = 0
-    @driver.get("http://www.countyoffice.org/#{state_site}-#{county.downcase.gsub(" ", "-")}-daycare-p#{@p}/")
   end
 
-  def scrape(state_site, county)
-    name = @wait.until {@driver.find_elements(:class, "name").first.text}
-    address = @driver.find_elements(:class, "streetAddress").first.text
-    # if name_check(name, address)
-    #   @driver.navigate.back()
-    # else
-    city = @wait.until {@driver.find_elements(:class, "addressLocality").first.text}
-    state = @driver.find_elements(:class, "addressRegion").first.text
-    zip = @driver.find_elements(:class, "postalCode").first.text
-    phone = @driver.find_elements(:class, "telephone").blank? ? nil : @driver.find_elements(:class, "telephone").first.text
-    fax = @driver.find_elements(:class, "fax").blank? ? nil : @driver.find_elements(:class, "fax").first.text
-    county = county
-    create_facility(name, city, state, county, address, zip, phone, fax)
-    @driver.navigate.back()
-    # end
-  end
-
-  def name_check(name, address)
-    if Facility.exists?(facility_name: name)
-      facility = Facility.find_by(facility_name: name)
-      facility.facility_address == address
+  def info_check(state_site, info_array)
+    name = get_name(info_array[0].text)
+    add_info = get_address(info_array[1].text)
+    address = add_info[0]
+    phone = get_phone(info_array)
+    city = add_info[1]
+    state = state_site[1]
+    zip = add_info[2]
+    if info_array.count >= 4
+      extra_info = info_array.last.text
     else
-      false
+      extra_info = ""
+    end
+    create_facility(name, city, state, address, zip, phone, extra_info)
+  end
+
+  def get_name(name_string)
+    if name_string.include?("\n")
+      return name_string.split("\n")[0]
+    else
+      return name_string
     end
   end
 
-  def scrape2(state_site, county, f)
-    name = @wait.until {f.find_elements(:class, "name").first.text}
-    address = f.find_elements(:class, "streetAddress").first.text
-    if name_check(name, address)
-      @driver.navigate.back()
+  def get_phone(info_array)
+    phone_array = info_array[2].find_elements(:class, "phone")
+    if phone_array.count >= 4
+      phone = phone_array[2].text
     else
-      city = f.find_elements(:class, "addressLocality").first.text
-      state = f.find_elements(:class, "addressRegion").first.text
-      zip = @driver.find_elements(:class, "postalCode").first.text
-      phone = f.find_elements(:class, "telephone").blank? ? nil : f.find_elements(:class, "telephone").first.text
-      fax = f.find_elements(:class, "fax").blank? ? nil : f.find_elements(:class, "fax").first.text
-      county = county
-      create_facility(name, city, state, county, address, zip, phone, fax)
+       if phone_array.last.text == ""
+        phone = phone_array.first.text
+      else
+        phone = phone_array.last.text
+      end
     end
+    return phone.gsub("(", "").gsub(") ", "-")
   end
 
-  def create_facility(name, city, state, county, address, zip, phone, fax)
-    Facility.find_or_create_by(facility_name: name, facility_city: city, facility_state: state, facility_county: county, facility_address: address, facility_zip: zip, facility_phone_number: phone, facility_fax: fax)
+  def get_address(address_array)
+    add_arr = address_array.split("\n")
+    address = add_arr[0]
+    add = add_arr[1].split(", ")
+    city = add[0]
+    zip = add[1].split(" ")[1]
+    return [address, city, zip]
+  end
+
+  def create_facility(name, city, state, address, zip, phone, extra_info)
+    Facility.find_or_create_by(facility_name: name, facility_city: city, facility_state: state, facility_address: address, facility_zip: zip, facility_phone_number: phone, facility_extra_info: extra_info)
   end
 
   def rescue_error(state_site)
-    @driver.get ("http://www.countyoffice.org/#{state_site}-daycare/")
+    @driver.get ("https://www.homehealthcareagencies.com/directory/#{state_site[0]}/")
     @wait = Selenium::WebDriver::Wait.new(:timeout => 60)
-    @page_array =  @wait.until { @driver.find_elements(:class, "condensed-listing") }
     # @l += 1
   end
 
