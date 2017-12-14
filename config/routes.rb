@@ -9,6 +9,7 @@ Rails.application.routes.draw do
 
   get 'search', :controller => 'facilities'
   get 'data', :controller => 'facilities'
+  get 'update', :controller => 'facilities'
   # Example of regular route:
   #   get 'products/:id' => 'catalog#view'
 
