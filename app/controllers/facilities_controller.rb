@@ -35,34 +35,15 @@ class FacilitiesController < ApplicationController
 
   def search
     @driver = Selenium::WebDriver.for :chrome
-    binding.pry
     @wait = Selenium::WebDriver::Wait.new(:timeout => 40)
-    states_hash = {"NC" => "North Carolina", "ND" => "North Dakota", "OH" => "Ohio", "OK" => "Oklahoma", "OR" => "Oregon", "PA" => "Pennsylvania", "RI" => "Rhode Island", "SC" => "South Carolina", "SD" => "South Dakota", "TN" => "Tennessee", "TX" => "Texas", "UT" => "Utah", "VT" => "Vermont", "VA" => "Virginia", "WA" => "Washington", "WV" => "West Virginia", "WI" => "Wisconsin", "WY" => "Wyoming"}
-    states_hash.each do |state_site|
-    if state_site[0] == states_hash.first[0]
-      @p = 10
-    else
-      @p = 1
-    end
-    @l = 0
-      @driver.get ("https://www.seniorliving.org/facilities/#{state_site[0]}/")
+    standings = {"1" => "North American Summer 2017", "2" => "European Summer 2017" , "6" => "North American Fall 2017"}
+    standings.each do |stand|
+      @driver.get ("http://halodatahive.com/League/Standings/#{stand[0]}")
+      @wait.until {@driver.find_elements(:class, "full-tabs")}[1].find_element(:css, "a").click
+      @f = 1
+      @d = 0
+      get_fixtures(stand)
       begin
-        f_count = @driver.find_elements(:class, "gd-pagination-details").first.text.split(" ").last.to_i
-        pages = f_count/10
-        if pages%10 > 0
-          pages += 1
-        end
-        until @p >= pages do
-          @driver.get ("https://www.seniorliving.org/facilities/#{state_site[0]}/page/#{@p}")
-          city_row_count = @wait.until {@driver.find_element(:id, "city_results").find_elements(:class, "head").count}
-          until @l >= city_row_count do
-            click_facility(state_site, @wait.until {@driver.find_element(:id, "city_results").find_elements(:class, "head")[@l]})
-            @l += 1
-          end
-          @l = 0
-          @p += 1
-        end
-        @p = 0
       rescue Selenium::WebDriver::Error::StaleElementReferenceError
         puts "Selenium::WebDriver::Error::StaleElementReferenceError"
         sleep(1)
@@ -93,120 +74,59 @@ class FacilitiesController < ApplicationController
     end
   end
 
-  # def click_city(state_site, city)
-  #   @driver.get(city.attribute("href"))
-  #   sleep(2)
-  #   facility_count = @wait.until {@driver.find_elements(:xpath, "//*[@id='city-results-list-block']/div").count}
-  #   until @f >= facility_count do
-  #     facility = @wait.until {@driver.find_elements(:xpath, "//*[@id='city-results-list-block']/div")[@f]}
-  #     click_facility(state_site, facility)
-  #     @f +=1
-  #   end
-  #   @f=0
-  #   @driver.navigate.back
-  # end
-
-  def click_facility(state_site, facility)
-    f_link = facility.find_element(:css, "a")
-    @driver.get(f_link.attribute("href"))
-    get_info(state_site)
-  end
-
-  def get_info(state_site)
-    if  @driver.find_elements(:class, "facility") !=[]
-      info_scrape(state_site, @driver.find_element(:class, "facility").find_elements(:css, "h5"))
-    else
-      @l += 1
-      @driver.navigate.back()
+  def get_fixtures(stand)
+    dates = @wait.until {@driver.find_elements(:class, "group")}
+    d_ate = []
+    dates.each {|date| d_ate << date.text}
+    fix_list_count = @driver.find_elements(:css, "tbody")[1].find_elements(:css, "tr").count
+    until @f >= fix_list_count  do
+      @wait.until {@driver.find_elements(:class, "full-tabs")}[1].find_element(:css, "a").click
+      fix_list = @wait.until{@driver.find_elements(:css, "tbody")[1].find_elements(:css, "tr")}
+      if fix_list[@f].text == d_ate[@d + 1]
+        @d += 1
+        @f += 1
+      else
+        data = fix_list[@f].attribute("data-id")
+        teams = [] 
+        fix_list[@f].find_elements(:class, "fixture-team-name").each{|team| teams << team.text}
+        @driver.get("http://halodatahive.com/Scrim/Summary/#{data}")
+        get_stats(d_ate, stand, teams)
+        @f += 1
+      end
     end
+    @f = 1
+    @d = 0
   end
 
-  def info_scrape(state_site, info)
-    name = info.first.text.split("\n").last
-    address = info[1].text.split("\n").last
-    loc_arr = location(info[2].text.split("\n").last)
-    city = loc_arr[0]
-    state = state_site[1]
-    zip = loc_arr[1]
-    county = get_county(info)
-    phone = get_phone(info)
-    fax = get_fax(info)
-    create_facility(name, city, county, state, address, zip, phone, fax)
-  end
-
-  # def info_scrape1(state_site, info)
-  #   name = info.first.text.split("\n").last
-  #   address = info[1].text.split("\n").last
-  #   loc_arr = location(info[2].text.split("\n").last)
-  #   city = loc_arr[0]
-  #   state = state_site[1]
-  #   zip = loc_arr[1]
-  #   county = get_county(info)
-  #   phone = get_phone(info)
-  #   fax = ""
-  #   create_facility(name, city, county, state, address, zip, phone, fax)
-  # end
-
-  def get_county(info)
-    if info[3].text.split("\n").first == "County:"
-      return info[3].text.split("\n").last
-    elsif info[4].text.split("\n").first == "County:"
-      return info[4].text.split("\n").last
-    elsif info[-2].text.split("\n").first == "County:"
-      return info[-2].text.split("\n").last
-    else
-      binding.pry
+  def get_stats(d_ate, stand, teams)
+    @g = 0
+    s_table_count = @wait.until{@driver.find_element(:class, "table-responsive").find_elements(:css, "tr").count}
+    until @g >= s_table_count do 
+      s_table = @driver.find_element(:class, "table-responsive").find_elements(:css, "tr")[@g]
+      get_info(s_table, d_ate, stand, teams)
+      @g += 1
     end
-  end
-
-  def get_phone(info)
-    if info[-2].text.split("\n").first == "Phone:"
-      phone = info[-2].text.split("\n").last
-    elsif info[-1].text.split("\n").first == "Phone:"
-      phone = info[-1].text.split("\n").last
-    elsif info[-3].text.split("\n").first == "Phone:"
-      phone = info[-3].text.split("\n").last
-    elsif info[4].text.split("\n").first == "Phone:"
-      phone = info[4].text.split("\n").last
-    elsif info[5].text.split("\n").first == "Phone:"
-      phone = info[5].text.split("\n").last
-    else
-      phone = ""
-    end
-      return phone.gsub("(", "").gsub(") ", "-")
-  end
-
-  def get_fax(info)
-    if info[-1].text.split("\n").first == "FAX:"
-      fax = info[-1].text.split("\n").last
-    elsif info[-2].text.split("\n").first == "FAX:"
-      fax = info[-2].text.split("\n").last
-    elsif info[-3].text.split("\n").first == "FAX:"
-      fax = info[-3].text.split("\n").last
-    elsif info[4].text.split("\n").first == "FAX:"
-      fax = info[4].text.split("\n").last
-    else
-      fax = ""
-    end
-      return fax.gsub("(", "").gsub(")", "-").gsub(" ", "").gsub(".", "-")
-  end
-
-
-  def location(location)
-    city = location.split(",").first
-    state_zip = location.split(", ").last
-    zip = state_zip.split(" ").last
-    return [city, zip]
-  end
-
-  def create_facility(name, city, county, state, address, zip, phone, fax)
-    Facility.find_or_create_by(facility_name: name, facility_city: city, facility_state: state, facility_county: county, facility_address: address, facility_zip: zip, facility_phone_number: phone, facility_fax: fax)
     @driver.navigate.back()
+  end
+
+  def get_info(s_table, d_ate, stand, teams)
+    match_id = s_table.attribute("data-href").gsub("/Match/Detail/", "")
+    team_a = teams.first
+    team_b = teams.last
+    date = d_ate[@d]
+    season = stand[1]
+    create_facility(date, season, team_a, team_b, match_id)
+  end
+
+  #date = name, season = city, team_a = county, team_b = state, match_id = address 
+
+  def create_facility(name, city, county, state, address)
+    Facility.find_or_create_by(facility_name: name, facility_city: city, facility_state: state, facility_county: county, facility_address: address)
   end
 
   def rescue_error(state_site)
     binding.pry
-    @driver.get ("https://www.seniorliving.org/facilities/#{state_site[0]}/page/#{@p}")
+    @driver.get ("http://halodatahive.com/League/Standings/#{stand[0]}")
     @wait = Selenium::WebDriver::Wait.new(:timeout => 40)
   end
 
