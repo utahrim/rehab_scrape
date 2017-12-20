@@ -36,11 +36,11 @@ class FacilitiesController < ApplicationController
   def search
     @driver = Selenium::WebDriver.for :chrome
     binding.pry
-    @wait = Selenium::WebDriver::Wait.new(:timeout => 10)
-    states_hash = {"CA" => "California", "CO" => "Colorado", "CT" => "Connecticut", "DE" => "Delaware", "DC" => "District of Columbia", "FL" => "Florida", "GA" => "Georgia", "HI" => "Hawaii", "ID" => "Idaho", "IL" => "Illinois", "IN" => "Indiana", "IA" => "Iowa", "KS" => "Kansas", "KY" => "Kentucky", "LA" => "Louisiana", "ME" => "Maine", "MD" => "Maryland", "MA" => "Massachusetts", "MI" => "Michigan", "MN" => "Minnesota", "MS" => "Mississippi", "MO" => "Missouri", "MT" => "Montana", "NE" => "Nebraska", "NV" => "Nevada", "NH" => "New Hampshire", "NJ" => "New Jersey", "NM" => "New Mexico", "NY" => "New York", "NC" => "North Carolina", "ND" => "North Dakota", "OH" => "Ohio", "OK" => "Oklahoma", "OR" => "Oregon", "PA" => "Pennsylvania", "RI" => "Rhode Island", "SC" => "South Carolina", "SD" => "South Dakota", "TN" => "Tennessee", "TX" => "Texas", "UT" => "Utah", "VT" => "Vermont", "VA" => "Virginia", "WA" => "Washington", "WV" => "West Virginia", "WI" => "Wisconsin", "WY" => "Wyoming"}
+    @wait = Selenium::WebDriver::Wait.new(:timeout => 40)
+    states_hash = {"NC" => "North Carolina", "ND" => "North Dakota", "OH" => "Ohio", "OK" => "Oklahoma", "OR" => "Oregon", "PA" => "Pennsylvania", "RI" => "Rhode Island", "SC" => "South Carolina", "SD" => "South Dakota", "TN" => "Tennessee", "TX" => "Texas", "UT" => "Utah", "VT" => "Vermont", "VA" => "Virginia", "WA" => "Washington", "WV" => "West Virginia", "WI" => "Wisconsin", "WY" => "Wyoming"}
     states_hash.each do |state_site|
     if state_site[0] == states_hash.first[0]
-      @p = 1
+      @p = 10
     else
       @p = 1
     end
@@ -113,7 +113,12 @@ class FacilitiesController < ApplicationController
   end
 
   def get_info(state_site)
-    info_scrape(state_site, @driver.find_element(:class, "facility").find_elements(:css, "h5"))
+    if  @driver.find_elements(:class, "facility") !=[]
+      info_scrape(state_site, @driver.find_element(:class, "facility").find_elements(:css, "h5"))
+    else
+      @l += 1
+      @driver.navigate.back()
+    end
   end
 
   def info_scrape(state_site, info)
@@ -202,7 +207,7 @@ class FacilitiesController < ApplicationController
   def rescue_error(state_site)
     binding.pry
     @driver.get ("https://www.seniorliving.org/facilities/#{state_site[0]}/page/#{@p}")
-    @wait = Selenium::WebDriver::Wait.new(:timeout => 10)
+    @wait = Selenium::WebDriver::Wait.new(:timeout => 40)
   end
 
 end
