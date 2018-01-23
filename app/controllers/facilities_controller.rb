@@ -16,18 +16,17 @@ class FacilitiesController < ApplicationController
     @driver = Selenium::WebDriver.for :chrome
     states_array = ["al", "ak", "az", "ar", "ca", "co", "ct", "dc", "de", "fl", "ga", "hi", "id", "il", "in", "ia", "ks", "ky", "la", "ma", "me", "md", "mi", "mn", "ms", "mo", "mt", "ne", "nv", "nj", "nh", "nm", "ny", "nc", "nd", "oh", "ok", "or", "pa", "ri", "sc", "sd", "tn", "tx", "ut", "va", "vt", "wa", "wv", "wi", "wy"]
     states_array.each do |state_site|
-      @driver.get ("http://www.countyoffice.org/#{state_site}-audit=[ ors/")
+      @driver.get ("http://www.countyoffice.org/#{state_site}-assisted-living-nursing-home/")
       @wait = Selenium::WebDriver::Wait.new(:timeout => 20)
       @l = 0
       @c = 0
       begin
-        county_list = @wait.until {@driver.find_elements(:xpath, "/html/body/div[2]/div/div[1]/div[5]/div/a")}
+        county_list = @wait.until {@driver.find_elements(:xpath, "/html/body/div/div/div[1]/div[3]/ul/li")}
         county_count = county_list.count
-
         until @c >= county_count do
-          county_list = @wait.until {@driver.find_elements(:xpath, "/html/body/div[2]/div/div[1]/div[5]/div/a")}
+          county_list = @wait.until {@driver.find_elements(:xpath, "/html/body/div/div/div[1]/div[3]/ul/li")}
           county = county_list[@c].text
-          county_list[@c].click
+          county_list[@c].find_element(:css, "a").click
           check_page(state_site, county)
           @c += 1
         end
@@ -57,24 +56,26 @@ class FacilitiesController < ApplicationController
     end
   end
 
-  def get_pages(state_site, county)
-    @p = 1
-    pages = @wait.until {@driver.find_elements(:xpath, "/html/body/div[2]/div/div[1]/nav[1]/ul/li").last.text.to_i}
-    until @p > pages do
-      click_facility(state_site, county)
-    end
-    @driver.get ("http://www.countyoffice.org/#{state_site}-auditors/")
-  end
-
-
   def check_page(state_site, county)
-    if @wait.until {@driver.find_elements(:class, "mob-clip")} != []
+    if @wait.until {@driver.find_elements(:css, "p[class='condensed-listing']")} != []
       get_pages(state_site, county)
     else
       get_info(state_site, county)
     end
-    @driver.get ("http://www.countyoffice.org/#{state_site}-auditors/")
+    @driver.get ("http://www.countyoffice.org/#{state_site}-assisted-living-nursing-home/")
   end
+
+  def get_pages(state_site, county)
+    @p = 1
+    binding.pry
+    pages = @wait.until {@driver.find_elements(:xpath, "/html/body/div[2]/div/div[1]/nav[1]/ul/li").last.text.to_i}
+    until @p > pages do
+      click_facility(state_site, county)
+    end
+    @driver.get ("http://www.countyoffice.org/#{state_site}-assisted-living-nursing-home/")
+  end
+
+
 
   def get_info(state_site, county)
      f_array = @wait.until {@driver.find_elements(:class, "dl-horizontal")}
@@ -89,17 +90,17 @@ class FacilitiesController < ApplicationController
   end
 
   def click_facility(state_site, county)
-    facility_array = @wait.until {@driver.find_elements(:class, "mob-clip")}
+    facility_array = @wait.until {@driver.find_elements(:css, "p[class='condensed-listing']")}
     counter = facility_array.count
     until @l >= counter do
-      page_array = @wait.until {@driver.find_elements(:class, "mob-clip")}
+      page_array = @wait.until {@driver.find_elements(:css, "p[class='condensed-listing']")}
       page_array[@l].click()
       scrape(state_site, county)
       @l += 1
     end
     @p += 1
     @l = 0
-    @driver.get("http://www.countyoffice.org/#{state_site}-#{county.downcase.gsub(" ", "-")}-auditors-p#{@p}/")
+    @driver.get("http://www.countyoffice.org/#{state_site}-#{county.downcase.gsub(" ", "-")}-assisted-living-nursing-home-p#{@p}/")
   end
 
   def scrape(state_site, county)
@@ -132,9 +133,9 @@ class FacilitiesController < ApplicationController
   end
 
   def rescue_error(state_site)
-    @driver.get ("http://www.countyoffice.org/#{state_site}-auditors/")
+    @driver.get ("http://www.countyoffice.org/#{state_site}-assisted-living-nursing-home/")
     @wait = Selenium::WebDriver::Wait.new(:timeout => 20)
-    @page_array =  @wait.until { @driver.find_elements(:class, "mob-clip") }
+    @page_array =  @wait.until { @driver.find_elements(:css, "p[class='condensed-listing']") }
     @l += 1
   end
 
