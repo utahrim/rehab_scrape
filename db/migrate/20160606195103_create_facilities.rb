@@ -1,6 +1,7 @@
 class CreateFacilities < ActiveRecord::Migration
   def change
     create_table :facilities do |t|
+      t.string :agency_name
       t.string :facility_name
       t.string :facility_state
       t.string :initial_amount
